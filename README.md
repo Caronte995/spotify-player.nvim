@@ -35,16 +35,10 @@
 
 ## Screenshot / Image
 
-> **Tip:** upload an image (`screenshot`) of your player to the repository in the `assets/` folder (e.g. `assets/screenshot.png`) and paste the relative link here to display it in the README:
-
 ```markdown
-![spotify-player.nvim screenshot](assets/screenshot.png)
-```
+<img width="707" height="281" alt="Image" src="https://github.com/user-attachments/assets/1b0e7fea-a6e5-48fb-8ccf-1b6264f8a665" />
 
-(Optional) If you want an externally hosted image, use the full URL:
-
-```markdown
-![spotify-player.nvim screenshot](https://raw.githubusercontent.com/Caronte995/spotify-player.nvim/main/assets/screenshot.png)
+<img width="1920" height="1080" alt="Image" src="https://github.com/user-attachments/assets/8f500843-0b28-45f8-806b-c72cbd652e4b" >
 ```
 
 ---
@@ -77,8 +71,6 @@ return {
   }
 }
 ```
-
-> **Important:** the public repository should be hosted at `https://github.com/Caronte995/spotify-player.nvim` for the above reference to work as is.
 
 ---
 
@@ -174,8 +166,6 @@ require(“spotify-player”).setup({
 })
 ```
 
-> These are suggested options. Adjust field names and values according to your plugin implementation.
-
 If the plugin provides more options, add them to the `setup({ ... })` table.
 
 ---
@@ -202,5 +192,3 @@ This project is inspired by ideas from `stsewd/spotify.nvim`. Many thanks to the
 ## License
 
 **MIT** license — see `LICENSE` in the repository.
-
-Translated with DeepL.com (free version)
