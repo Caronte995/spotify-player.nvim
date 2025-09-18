@@ -4,6 +4,17 @@
 
 **spotify-player.nvim** is a lightweight and elegant plugin for **Neovim** that displays the current playback status of Spotify (or another player compatible with `playerctl`) and allows you to control it without leaving the editor.
 
+
+
+---
+
+## Screenshot / Image
+<img width="707" height="281" alt="screenshot" src="https://github.com/user-attachments/assets/bd08b8e5-88e0-4c90-b7ff-6c68fa94b9b3" />
+
+
+
+<img width="1920" height="1080" alt="screenshot2" src="https://github.com/user-attachments/assets/3aff731a-9ae0-4482-bf55-dfbd69bbc6a2" />
+
 ---
 
 ## Table of Contents
@@ -30,16 +41,6 @@
 - Visual progress bar and playback time.
 - Highly configurable.
 - Very lightweight — only one external dependency: `playerctl`.
-
----
-
-## Screenshot / Image
-
-```markdown
-<img width="707" height="281" alt="Image" src="https://github.com/user-attachments/assets/1b0e7fea-a6e5-48fb-8ccf-1b6264f8a665" />
-
-<img width="1920" height="1080" alt="Image" src="https://github.com/user-attachments/assets/8f500843-0b28-45f8-806b-c72cbd652e4b" >
-```
 
 ---
 
@@ -102,7 +103,7 @@ Example from the Neovim command line:
 
 There are two ways to enable shortcuts:
 
-**1. Automatic mode (easy)** — activate from the options (see configuration below):
+**1. Automatic mode** — activate from the options (see configuration below):
 
 ```lua
 require(“spotify-player”).setup({
@@ -112,7 +113,7 @@ require(“spotify-player”).setup({
 })
 ```
 
-**2. Manual mode** — define your own shortcuts (example in `lua/keymaps.lua`):
+**2. Manual mode** — define your own shortcuts:
 
 ```lua
 local spotify = require(“spotify-player”)
@@ -166,7 +167,6 @@ require(“spotify-player”).setup({
 })
 ```
 
-If the plugin provides more options, add them to the `setup({ ... })` table.
 
 ---
 

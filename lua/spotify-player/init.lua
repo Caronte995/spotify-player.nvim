@@ -1,14 +1,14 @@
 -- lua/spotify-player/init.lua
--- Lógica principal y comandos para el plugin spotify-player.nvim.
--- Este archivo está corregido para funcionar sin necesidad de llamar a setup().
+-- Main logic and commands for the spotify-player.nvim plugin.
+-- This file is set up to work without needing a setup() call.
 
 local M = {}
 
 -- -----------------------------------------------------------------------------
--- Helpers para la configuración
+-- Configuration Helpers
 -- -----------------------------------------------------------------------------
 
--- Función para crear una copia profunda de una tabla, para evitar modificar la configuración por defecto.
+-- Function to create a deep copy of a table, to avoid modifying the default configuration.
 local function deepcopy(original)
     local copy = {}
     for k, v in pairs(original) do
@@ -20,7 +20,7 @@ local function deepcopy(original)
     return copy
 end
 
--- Fusiona la tabla 'b' en la 'a', modificando 'a'.
+-- Merges table 'b' into 'a', modifying 'a'.
 local function deep_merge(a, b)
   for k, v in pairs(b) do
     if type(v) == "table" and type(a[k]) == "table" then
@@ -33,21 +33,21 @@ local function deep_merge(a, b)
 end
 
 -- -----------------------------------------------------------------------------
--- Configuración por Defecto
+-- Default Configuration
 -- -----------------------------------------------------------------------------
 local defaults = {
-  -- Ajustes generales
-  player = "spotify", -- Nombre para playerctl (ej. "spotify", "spotifyd")
-  interval_ms = 1000, -- Intervalo de actualización en milisegundos
+  -- General settings
+  player = "spotify", -- Player name for playerctl (e.g., "spotify", "spotifyd")
+  interval_ms = 1000, -- Update interval in milliseconds
 
-  -- Apariencia de la ventana
-  width = 45,        -- Ancho en columnas
-  height = 7,        -- Alto en líneas
-  row_offset = 3,    -- Distancia desde el borde inferior de Neovim
-  col_offset = 2,    -- Distancia desde el borde derecho de Neovim
-  border = "rounded",-- Estilo del borde (ver :help nvim_open_win)
+  -- Window appearance
+  width = 45,        -- Width in columns
+  height = 7,        -- Height in lines
+  row_offset = 3,    -- Distance from the bottom edge of Neovim
+  col_offset = 2,    -- Distance from the right edge of Neovim
+  border = "rounded",-- Border style (see :help nvim_open_win)
 
-  -- Iconos (requiere una Nerd Font)
+  -- Icons (requires a Nerd Font)
   icons = {
     track = "🎵", artist = "👥", album = "💿",
     shuffle_on = "🔀", shuffle_off = "→",
@@ -56,7 +56,7 @@ local defaults = {
     progress_indicator = "●", progress_filled = "─", progress_empty = "·",
   },
 
-  -- Atajos de teclado (configura `enabled = true` en tu setup para activarlos)
+  -- Keymaps (set `enabled = true` in your setup to activate them)
   keymaps = {
     enabled = false,
     volume_up = "<leader>s+", volume_down = "<leader>s-",
@@ -64,27 +64,24 @@ local defaults = {
     play_pause = "<leader>sp", toggle_repeat = "<leader>sr",
     toggle_shuffle = "<leader>ss", toggle_widget = "<leader>st",
   },
-
-  -- Mostrar notificaciones para las acciones (ej. "Siguiente canción")
-  show_notifications = true,
 }
 
--- La configuración se inicializa con los valores por defecto.
--- Esto hace que el plugin funcione sin necesidad de llamar a M.setup().
+-- The configuration is initialized with default values.
+-- This allows the plugin to work without calling M.setup().
 local cfg = deepcopy(defaults)
 
 -- -----------------------------------------------------------------------------
--- Estado Interno
+-- Internal State
 -- -----------------------------------------------------------------------------
 M._buf = nil
 M._win = nil
 M._timer = nil
 
 -- -----------------------------------------------------------------------------
--- Funciones Auxiliares
+-- Helper Functions
 -- -----------------------------------------------------------------------------
 
--- Ejecuta un comando de sistema y devuelve la primera línea del resultado.
+-- Executes a system command and returns the first line of the output.
 local function safe_system(cmd)
   local output = vim.fn.systemlist(cmd)
   if vim.v.shell_error ~= 0 or not output or vim.tbl_isempty(output) then
@@ -93,12 +90,12 @@ local function safe_system(cmd)
   return output[1]
 end
 
--- Comprueba si playerctl está disponible en el sistema.
+-- Checks if playerctl is available on the system.
 local function playerctl_available()
   return vim.fn.executable("playerctl") == 1
 end
 
--- Formatea un string de segundos al formato MM:SS.
+-- Formats a seconds string to MM:SS format.
 local function format_time(seconds_str)
   local sec = tonumber(seconds_str)
   if not sec or sec < 0 then return "00:00" end
@@ -107,7 +104,7 @@ local function format_time(seconds_str)
   return string.format("%02d:%02d", mins, secs)
 end
 
--- Centra un texto en un ancho dado, considerando caracteres anchos (iconos).
+-- Centers text within a given width, considering wide characters (icons).
 local function center_text(text, width)
     local text_len = vim.fn.strwidth(text)
     if text_len >= width then return text end
@@ -116,13 +113,13 @@ local function center_text(text, width)
 end
 
 -- -----------------------------------------------------------------------------
--- Lógica Principal
+-- Main Logic
 -- -----------------------------------------------------------------------------
 
--- Obtiene toda la información necesaria del reproductor.
+-- Gets all the necessary information from the player.
 local function get_player_info()
   if not playerctl_available() then
-    return nil, "Error: `playerctl` no está instalado."
+    return nil, "Error: `playerctl` is not installed."
   end
 
   local player = cfg.player
@@ -130,7 +127,7 @@ local function get_player_info()
   local status = safe_system(status_cmd)
 
   if not status then
-    return nil, string.format("Reproductor '%s' no activo.", player)
+    return nil, string.format("Player '%s' not active.", player)
   end
 
   return {
@@ -146,12 +143,12 @@ local function get_player_info()
   }
 end
 
--- Formatea la información del reproductor en líneas para la ventana.
+-- Formats the player information into lines for the window.
 local function format_content(info)
-  if not info then return { "Reproductor desconectado" } end
+  if not info then return { "Player disconnected" } end
 
   local lines = {}
-  local bar_width = cfg.width - 4 -- Ancho para la barra de progreso
+  local bar_width = cfg.width - 4 -- Width for the progress bar
 
   local status_icon = cfg.icons.stopped
   if info.status:lower():find("play") then status_icon = cfg.icons.playing end
@@ -160,17 +157,17 @@ local function format_content(info)
   local shuffle_icon = (info.shuffle == "On") and cfg.icons.shuffle_on or cfg.icons.shuffle_off
   local repeat_icon = (info.loop ~= "None") and cfg.icons.repeat_on or cfg.icons.repeat_off
 
-  lines[1] = string.format(" %s  %s", cfg.icons.track, info.title or "Desconocido")
-  lines[2] = string.format(" %s  %s", cfg.icons.artist, info.artist or "Desconocido")
-  lines[3] = string.format(" %s  %s", cfg.icons.album, info.album or "Desconocido")
-  lines[4] = "" -- Línea en blanco
+  lines[1] = string.format(" %s  %s", cfg.icons.track, info.title or "Unknown")
+  lines[2] = string.format(" %s  %s", cfg.icons.artist, info.artist or "Unknown")
+  lines[3] = string.format(" %s  %s", cfg.icons.album, info.album or "Unknown")
+  lines[4] = "" -- Blank line
 
   local volume_pct = math.floor((tonumber(info.volume) or 0) * 100)
   local controls_line = string.format("%s   %s   %s   %s %d%%", shuffle_icon, repeat_icon, status_icon, cfg.icons.volume, volume_pct)
   lines[5] = center_text(controls_line, bar_width + 2)
 
   local pos_s = tonumber(info.position) or 0
-  local len_s = (tonumber(info.length) or 0) / 1000000 -- mpris:length está en microsegundos
+  local len_s = (tonumber(info.length) or 0) / 1000000 -- mpris:length is in microseconds
   local time_str = string.format("%s / %s", format_time(pos_s), format_time(len_s))
   
   local progress_pct = 0
@@ -189,7 +186,7 @@ local function format_content(info)
   return lines
 end
 
--- Actualiza el contenido de la ventana una vez.
+-- Updates the window content once.
 local function update_once()
   if not M._buf or not vim.api.nvim_buf_is_valid(M._buf) then return end
 
@@ -207,7 +204,7 @@ local function update_once()
 end
 
 -- -----------------------------------------------------------------------------
--- Gestión de Ventana y Temporizador
+-- Window and Timer Management
 -- -----------------------------------------------------------------------------
 
 local function make_buffer()
@@ -261,10 +258,10 @@ local function start_timer()
 end
 
 -- -----------------------------------------------------------------------------
--- API Pública y Comandos
+-- Public API and Commands
 -- -----------------------------------------------------------------------------
 
--- Función para mostrar/ocultar la ventana flotante.
+-- Function to toggle the floating window.
 function M.toggle()
   if M._win and vim.api.nvim_win_is_valid(M._win) then
     stop_timer()
@@ -275,52 +272,49 @@ function M.toggle()
   end
 end
 
--- Función genérica para enviar comandos a playerctl.
-local function run_command(action, notification_msg)
+-- Generic function to send commands to playerctl.
+local function run_command(action)
   if not playerctl_available() then
-    vim.notify("spotify-player: `playerctl` no está instalado.", vim.log.levels.ERROR)
+    vim.notify("spotify-player: `playerctl` is not installed.", vim.log.levels.ERROR)
     return
   end
   vim.fn.system(string.format("playerctl -p %s %s", cfg.player, action))
-  if cfg.show_notifications and notification_msg then
-      vim.notify("Spotify: " .. notification_msg, vim.log.levels.INFO, { title = "Control Spotify" })
-  end
   if M._win and vim.api.nvim_win_is_valid(M._win) then
     vim.schedule(update_once)
   end
 end
 
--- Manejador para el comando :Spotify.
+-- Handler for the :Spotify command.
 function M.handler(args)
     local action = args.fargs[1]
     if not action or action == "" then
-        run_command("play-pause", "Cambiado Play/Pause")
+        run_command("play-pause")
     elseif action == "next" then
-        run_command("next", "Siguiente Canción")
+        run_command("next")
     elseif action == "previous" then
-        run_command("previous", "Canción Anterior")
+        run_command("previous")
     elseif action == "volume_up" then
-        run_command("volume 0.05+", "Volumen +")
+        run_command("volume 0.05+")
     elseif action == "volume_down" then
-        run_command("volume 0.05-", "Volumen -")
+        run_command("volume 0.05-")
     elseif action == "toggle_shuffle" then
-        run_command("shuffle Toggle", "Cambiado Aleatorio")
+        run_command("shuffle Toggle")
     elseif action == "toggle_repeat" then
         local current_loop = safe_system(string.format("playerctl -p %s loop", cfg.player))
-        if current_loop == "None" then run_command("loop Playlist", "Repetir: Playlist")
-        elseif current_loop == "Playlist" then run_command("loop Track", "Repetir: Canción")
-        else run_command("loop None", "Repetir: No") end
+        if current_loop == "None" then run_command("loop Playlist")
+        elseif current_loop == "Playlist" then run_command("loop Track")
+        else run_command("loop None") end
     else
-        vim.notify("spotify-player: Comando desconocido '" .. action .. "'", vim.log.levels.WARN)
+        vim.notify("spotify-player: Unknown command '" .. action .. "'", vim.log.levels.WARN)
     end
 end
 
--- Configura los atajos de teclado definidos en la configuración.
+-- Sets up the keymaps defined in the configuration.
 local function setup_keymaps()
   if not cfg.keymaps.enabled then return end
   local map = vim.keymap.set
   local opts = { noremap = true, silent = true, desc = "Control Spotify" }
-  map("n", cfg.keymaps.toggle_widget, M.toggle, { noremap = true, silent = true, desc = "Alternar Spotify Player" })
+  map("n", cfg.keymaps.toggle_widget, M.toggle, { noremap = true, silent = true, desc = "Toggle Spotify Player" })
   map("n", cfg.keymaps.play_pause, function() M.handler({ fargs = { "" } }) end, opts)
   map("n", cfg.keymaps.next, function() M.handler({ fargs = { "next" } }) end, opts)
   map("n", cfg.keymaps.previous, function() M.handler({ fargs = { "previous" } }) end, opts)
@@ -330,37 +324,37 @@ local function setup_keymaps()
   map("n", cfg.keymaps.toggle_repeat, function() M.handler({ fargs = { "toggle_repeat" } }) end, opts)
 end
 
--- Función de setup principal (opcional).
+-- Main setup function (optional).
 function M.setup(opts)
-  -- Fusiona las opciones del usuario con la configuración actual.
+  -- Merges user options with the current configuration.
   deep_merge(cfg, opts or {})
   setup_keymaps()
 end
 
 -- -----------------------------------------------------------------------------
--- Creación de Comandos de Neovim
+-- Neovim Command Creation
 -- -----------------------------------------------------------------------------
--- Se crean aquí para que el plugin funcione sin necesidad de un archivo `plugin/`.
+-- They are created here so the plugin works without a `plugin/` file.
 
--- Comando :Spotify que acepta argumentos
+-- :Spotify command that accepts arguments
 vim.api.nvim_create_user_command("Spotify", function(args)
   M.handler(args)
 end, {
-    nargs = "?", -- Acepta 0 o 1 argumento
+    nargs = "?", -- Accepts 0 or 1 argument
     complete = function()
         return { "next", "previous", "volume_up", "volume_down", "toggle_shuffle", "toggle_repeat" }
     end,
-    desc = "Controla Spotify (play-pause, next, previous, etc.)"
+    desc = "Control Spotify (play-pause, next, previous, etc.)"
 })
 
--- Comando para mostrar/ocultar el widget
+-- Command to toggle the widget
 vim.api.nvim_create_user_command("SpotifyToggle", function()
   M.toggle()
 end, {
-  desc = "Muestra/Oculta la ventana de estado de Spotify",
+  desc = "Shows/Hides the Spotify status window",
 })
 
--- Limpieza al salir de Neovim
+-- Cleanup on Neovim exit
 vim.api.nvim_create_autocmd("VimLeavePre", {
   callback = function()
     stop_timer()
@@ -369,3 +363,4 @@ vim.api.nvim_create_autocmd("VimLeavePre", {
 })
 
 return M
+
